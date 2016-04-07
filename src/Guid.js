@@ -12,7 +12,7 @@
  * @see <a href="http://davidbau.com/encode/seedrandom.js">seedrandom</a>
  */
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
-var Guid = (function( undefined )
+var Guid = (function( window, undefined )
 {
 function S4()
 {	// http://note19.com/2007/05/27/javascript-guid-generator/
@@ -64,20 +64,25 @@ Guid.prototype.toJSON
 Guid.prototype.toByteArray = function()
 {return( this.bytes.slice( 0 ));};
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
-var VERSION_VALUE = 0x4;// Version bits to set.
+var VERSION_VALUE = 0x4;// Version bits to set for version 4.
 var VERSION_CLEAR = 0x0;// Version bits to clear.
-var VARIANT_VALUE = 0x8;// Variant bits to set for Standard variant (10x).
+var VARIANT_VALUE = 0x8;// Variant bits to set for "Standard" variant (10x).
 var VARIANT_CLEAR = 0x3;// Variant bits to clear.
+Guid.comparator = function( left, right )
+{
+	var comparison = (new Guid( left )).compareTo( new Guid( right ));
+	return( comparison );
+};
 Guid.newGuid = function()
 {
 	var data3_version = S4();
 	data3_version = ''.concat(
-		(parseInt( data3_version.charAt( 0 ), 16 ) & VERSION_CLEAR | VERSION_VALUE).toString( 16 ),
+		(window.parseInt( data3_version.charAt( 0 ), 16 ) & VERSION_CLEAR | VERSION_VALUE).toString( 16 ),
 		data3_version.substr( 1, 3 )
 	);
 	var data4_variant = S4();
 	data4_variant = data4_variant.substr( 0, 2 ).concat(
-		(parseInt( data4_variant.charAt( 2 ), 16 ) & VARIANT_CLEAR | VARIANT_VALUE).toString( 16 ),
+		(window.parseInt( data4_variant.charAt( 2 ), 16 ) & VARIANT_CLEAR | VARIANT_VALUE).toString( 16 ),
 		data4_variant.substr( 3, 1 )
 	);
 	var guid_str = S4().concat( S4(), '-', S4(), '-', data3_version, '-', data4_variant, '-', S4(), S4(), S4());
@@ -99,4 +104,4 @@ Object.defineProperty( Guid, 'REGULAR_EXPRESSION',
 // EMPTY must wait to be defined after the regular expression is defined.
 Object.defineProperty( Guid, 'EMPTY', {'enumerable':true, 'value':new Guid( '00000000-0000-0000-0000-000000000000' ), 'writable':false,});
 return( Guid );
-})();
+})( window );
