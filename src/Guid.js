@@ -184,3 +184,4 @@ Object.defineProperty( Guid, 'UuidVersion', {'value':uuidVersion, 'writable':fal
 Object.defineProperty( Guid, 'EMPTY', {'enumerable':true, 'value':new Guid( '00000000-0000-0000-0000-000000000000' ), 'writable':false,});
 return( Guid );
 })( window );
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
