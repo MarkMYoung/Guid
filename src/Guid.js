@@ -4,7 +4,7 @@
  *	(except that member letter case follows JavaScript conventions).
  *
  * @author Mark M. Young
- * @version 1.2
+ * @variant 1.2
  * date 2012-01-11
  * @see <a href="http://en.wikipedia.org/wiki/Globally_unique_identifier">GUID information</a>
  * @see <a href="http://msdn.microsoft.com/en-us/library/system.guid.aspx">Microsoft Guid API</a>
@@ -15,22 +15,32 @@
 var Guid = (function( window, undefined )
 {
 function S4()
-{	// http://note19.com/2007/05/27/javascript-guid-generator/
-	return((((1 + Math.random()) * 0x10000) | 0).toString( 16 ).substring( 1 ));
+{return((((1 + Math.random()) * 0x10000) | 0).toString( 16 ).substring( 1 ));}
+// Only tested against DCE variant.
+function setVariant( uuidVariant )
+{
+	var data3_variant = this.bytes.slice( 6, 8 ).join( '' );
+	var new_data3 = ''.concat(
+		(window.parseInt( data3_variant.charAt( 0 ), 16 ) & uuidVariant.clearBits | uuidVariant.setBits).toString( 16 ),
+		data3_variant.substr( 1, 3 )
+	);
+	var was_changed = new_data3 === data3_variant;
+	this.bytes[ 6 ] = new_data3.substr( 0, 2 );
+	this.bytes[ 7 ] = new_data3.substr( 2, 4 )
+	return( was_changed );
 }
-function setVersion( data3_version, uuidVersion )
-{// Only tested against DCE version.
-	return( ''.concat(
-		(window.parseInt( data3_version.charAt( 0 ), 16 ) & uuidVersion.clear | uuidVersion.value).toString( 16 ),
-		data3_version.substr( 1, 3 )
-	));
-}
-function setVariant( data4_variant, uuidVariant )
-{// Only tested against Random variant.
-	return( data4_variant.substr( 0, 2 ).concat(
-		(window.parseInt( data4_variant.charAt( 2 ), 16 ) & uuidVariant.clear | uuidVariant.value).toString( 16 ),
-		data4_variant.substr( 3, 1 )
-	));
+// Only tested against Random version.
+function setVersion( uuidVersion )
+{
+	var data4_version = this.bytes.slice( 8, 10 ).join( '' );
+	var new_data4 = ''.concat( data4_version.substr( 0, 2 ),
+		(window.parseInt( data4_version.charAt( 2 ), 16 ) & uuidVersion.clearBits | uuidVersion.setBits).toString( 16 ),
+		data4_version.substr( 3, 1 )
+	);
+	var was_changed = new_data4 === data4_version;
+	this.bytes[ 8 ] = new_data4.substr( 0, 2 );
+	this.bytes[ 9 ] = new_data4.substr( 2, 4 )
+	return( was_changed );
 }
 var Guid = function( a_string )
 {
@@ -44,7 +54,7 @@ var Guid = function( a_string )
 		{return( hex.toLowerCase());});
 	}
 	else
-	{throw( new TypeError( "Unacceptable GUID value: \"".concat( a_string, "\"." )));}
+	{throw( new TypeError( "Unacceptable GUID value: '".concat( a_string, "'." )));}
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 };
 Guid.prototype = new Object();
@@ -52,7 +62,7 @@ Guid.prototype.constructor = Guid;
 Guid.prototype.compareTo = function( thatGuid )
 {
 	if( !(thatGuid instanceof Guid))
-	{throw( new TypeError( "Guid.compareTo parameter must be a Guid." ));}
+	{throw( new TypeError( "'thatGuid' parameter must be a Guid." ));}
 	//var comparison = this.toString().localeCompare( thatGuid.toString());
 	var this_value = this.valueOf();
 	var that_value = thatGuid.valueOf();
@@ -83,14 +93,41 @@ Guid.comparator = function( left, right )
 	var comparison = (new Guid( left )).compareTo( new Guid( right ));
 	return( comparison );
 };
+Guid.getVariant = function( aGuid )
+{
+	if( !(aGuid instanceof Guid))
+	{throw( new TypeError( "'aGuid' parameter must be a Guid." ));}
+	var uuid_variant = null;
+	var data3_variant = window.parseInt( aGuid.toByteArray().slice( 6, 8 ).join( '' ).charAt( 0 ), 16 );
+	['DCE'].forEach( function( variant, v )
+	{
+		if((data3_variant & Guid.UuidVariant[ variant ].setBits) === Guid.UuidVariant[ variant ].setBits )
+		{uuid_variant = Guid.UuidVariant[ variant ].name;}
+	}, Guid.UuidVariant );
+	return( uuid_variant );
+};
+Guid.getVersion = function( aGuid )
+{
+	if( !(aGuid instanceof Guid))
+	{throw( new TypeError( "'aGuid' parameter must be a Guid." ));}
+	var uuid_version = null;
+	var data4_version = window.parseInt( aGuid.toByteArray().slice( 8, 10 ).join( '' ).charAt( 2 ), 16 );
+	['RANDOM'].forEach( function( version )
+	{
+		if((data4_version & Guid.UuidVersion[ version ].setBits) === Guid.UuidVersion[ version ].setBits )
+		{uuid_version = Guid.UuidVersion[ version ].name;}
+	}, Guid.UuidVersion );
+	return( uuid_version );
+};
 Guid.newGuid = function()
 {
-	var data3_version = S4();
-	data3_version = setVersion( data3_version, Guid.UuidVersion.DCE );
-	var data4_variant = S4();
-	data4_variant = setVariant( data4_variant, Guid.UuidVariant.RANDOM );
-	var guid_str = S4().concat( S4(), '-', S4(), '-', data3_version, '-', data4_variant, '-', S4(), S4(), S4());
-	return( new Guid( guid_str ));
+	var data3_variant = S4();
+	var data4_version = S4();
+	var guid_str = ''.concat( S4(), S4(), '-', S4(), '-', data3_variant, '-', data4_version, '-', S4(), S4(), S4());
+	var newGuid = new Guid( guid_str );
+	var variant_was_changed = setVariant.apply( newGuid, [Guid.UuidVariant.DCE]);
+	var version_was_changed = setVersion.apply( newGuid, [Guid.UuidVersion.RANDOM]);
+	return( newGuid );
 };
 // Expose the regular expression used.
 Object.defineProperty( Guid, 'REGULAR_EXPRESSION', 
@@ -102,46 +139,48 @@ Object.defineProperty( Guid, 'REGULAR_EXPRESSION',
 	//	/\(([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})\)/,
 	//	/{[ ]*(?:0x)([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})(?:,[ ]*{[ ]*0x)([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})(?:,[ ]*0x)([0-9A-Fa-f]{2})[ ]*}[ ]*}/,
 	//];
-	// Pattern breaks up any GUID into 16 pieces to accommodate the hexadecimal bracketed version.
+	// Pattern breaks up any GUID into 16 pieces to accommodate the hexadecimal bracketed variant.
 	{'enumerable':true, 'value':/([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})-?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})/, 'writable':false,
 });
-
-function UuidVersion(){}
-UuidVersion.prototype = new Object();
-UuidVersion.prototype.constructor = UuidVersion;
-var dceVersion = new UuidVersion();
-Object.defineProperties( dceVersion,
-{
-	// Version bits to clear (00xx).
-	'clear':{'enumerable':true, 'value':0x3, 'writable':false,},
-	// Version bits to set for variant, DCE (Distributed Computing Environment) (10x).
-	'value':{'enumerable':true, 'value':0x8, 'writable':false,},
-});
-var uuidVersion = {};
-Object.defineProperties( uuidVersion,
-{
-	'DCE':{'enumerable':true, 'value':dceVersion, 'writable':false,},
-});
-Object.defineProperty( Guid, 'UuidVersion', {'value':uuidVersion, 'writable':false,});
 
 function UuidVariant(){}
 UuidVariant.prototype = new Object();
 UuidVariant.prototype.constructor = UuidVariant;
-var randomVariant = new UuidVariant();
-Object.defineProperties( randomVariant,
+var dceVariant = new UuidVariant();
+Object.defineProperties( dceVariant,
 {
-	// Variant bits to clear (0000).
-	'clear':{'enumerable':true, 'value':0x0, 'writable':false,},
-	// Variant bits to set for version, 'Random'.
-	'value':{'enumerable':true, 'value':0x4, 'writable':false,},
+	// Variant bits to clear (00xx).
+	'clearBits':{'enumerable':true, 'value':0x3, 'writable':false,},
+	'name':{'enumerable':true, 'value':'DCE', 'writable':false,},
+	// Variant bits to set for version, DCE (Distributed Computing Environment) (10x).
+	'setBits':{'enumerable':true, 'value':0x8, 'writable':false,},
 });
 var uuidVariant = {};
 Object.defineProperties( uuidVariant,
 {
-	'RANDOM':{'enumerable':true, 'value':randomVariant, 'writable':false,},
+	'DCE':{'enumerable':true, 'value':dceVariant, 'writable':false,},
 });
 Object.defineProperty( Guid, 'UuidVariant', {'value':uuidVariant, 'writable':false,});
-// EMPTY must wait to be defined after the other properties are defined.
+
+function UuidVersion(){}
+UuidVersion.prototype = new Object();
+UuidVersion.prototype.constructor = UuidVersion;
+var randomVersion = new UuidVersion();
+Object.defineProperties( randomVersion,
+{
+	// Version bits to clear (0000).
+	'clearBits':{'enumerable':true, 'value':0x0, 'writable':false,},
+	'name':{'enumerable':true, 'value':'Random', 'writable':false,},
+	// Version bits to set for variant, 'Random'.
+	'setBits':{'enumerable':true, 'value':0x4, 'writable':false,},
+});
+var uuidVersion = {};
+Object.defineProperties( uuidVersion,
+{
+	'RANDOM':{'enumerable':true, 'value':randomVersion, 'writable':false,},
+});
+Object.defineProperty( Guid, 'UuidVersion', {'value':uuidVersion, 'writable':false,});
+// EMPTY must wait to be defined after the other properties are defined (because it instantiates a Guid).
 Object.defineProperty( Guid, 'EMPTY', {'enumerable':true, 'value':new Guid( '00000000-0000-0000-0000-000000000000' ), 'writable':false,});
 return( Guid );
 })( window );

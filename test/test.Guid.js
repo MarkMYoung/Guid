@@ -39,14 +39,14 @@ $(document).ready( function()
 	QUnit.test( "Special requirements", function( qUnit )
 	{
 		QUnit.expect( 2 );
-		var version_index = 14;
-		var version_value = 0x8;
-		QUnit.strictEqual( parseInt( Guid.newGuid().toString().charAt( version_index ), 16 ) & version_value, version_value,
-			"Value should indicate a 'DCE (Distributed Computing Environment)' version GUID." );
-
-		var variant_index = 21;
-		var variant_value = 0x4;
+		var variant_index = 14;
+		var variant_value = 0x8;
 		QUnit.strictEqual( parseInt( Guid.newGuid().toString().charAt( variant_index ), 16 ) & variant_value, variant_value,
-			"Value should indicate a 'Random' variant GUID." );
+			"Value should indicate a 'DCE (Distributed Computing Environment)' variant GUID." );
+
+		var version_index = 21;
+		var version_value = 0x4;
+		QUnit.strictEqual( parseInt( Guid.newGuid().toString().charAt( version_index ), 16 ) & version_value, version_value,
+			"Value should indicate a 'Random' version GUID." );
 	});
 });
