@@ -57,7 +57,7 @@ var Guid = function( a_string )
 	{throw( new TypeError( "Unacceptable GUID value: '".concat( a_string, "'." )));}
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=//
 };
-Guid.prototype = new Object();
+Guid.prototype = Object.create( Object.prototype );
 Guid.prototype.constructor = Guid;
 Guid.prototype.compareTo = function( thatGuid )
 {
@@ -144,7 +144,7 @@ Object.defineProperty( Guid, 'REGULAR_EXPRESSION',
 });
 
 function UuidVariant(){}
-UuidVariant.prototype = new Object();
+UuidVariant.prototype = Object.create( Object.prototype );
 UuidVariant.prototype.constructor = UuidVariant;
 var dceVariant = new UuidVariant();
 Object.defineProperties( dceVariant,
@@ -163,7 +163,7 @@ Object.defineProperties( uuidVariant,
 Object.defineProperty( Guid, 'UuidVariant', {'value':uuidVariant, 'writable':false,});
 
 function UuidVersion(){}
-UuidVersion.prototype = new Object();
+UuidVersion.prototype = Object.create( Object.prototype );
 UuidVersion.prototype.constructor = UuidVersion;
 var randomVersion = new UuidVersion();
 Object.defineProperties( randomVersion,
